@@ -3,15 +3,16 @@
 This project implements an asynchronous message processing system with partition logic and concurrency handling using [Java/Spring/other frameworks/tools] (depending on the technology stack). It focuses on efficiently processing messages, distributing them across partitions, and handling concurrent requests.
 
 # Features
-Asynchronous Message Processing
-Partitioning Logic
-Concurrency Management
+1. Asynchronous Message Processing
+2. Partitioning Logic
+3. Concurrency Management
 1. Asynchronous Message Processing
 The system processes messages asynchronously using [technology/framework]. This ensures non-blocking, efficient message handling. Here’s how the system works:
 
 Queue/Topic: Messages are sent to a queue or topic (e.g., using RabbitMQ, Kafka, etc.).
 Consumers: Consumers pick up these messages asynchronously without blocking the sender.
 Processing: Once the message is picked, it is processed independently, leveraging async calls to improve throughput and reduce processing delays.
+
 2. Partition Logic
 Messages are distributed across multiple partitions based on the following logic:
 
@@ -21,6 +22,8 @@ The partitioning helps in:
 
 Ensuring that related messages are processed together.
 Reducing contention by distributing messages across multiple partitions.
+
+
 3. Concurrency Handling
 Concurrency is handled effectively to ensure no race conditions or data inconsistencies:
 
