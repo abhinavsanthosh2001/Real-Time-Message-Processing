@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConsumerService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">QueuingMechanism</a> &gt; <a href="index.source.html" class="el_package">com.assignment2.queuingmechanism.service</a> &gt; <span class="el_source">ConsumerService.java</span></div><h1>ConsumerService.java</h1><pre class="source lang-java linenums">package com.assignment2.queuingmechanism.service;
+
+import com.assignment2.queuingmechanism.constants.Constants;
+import com.assignment2.queuingmechanism.constants.ConsumeRequestStatus;
+import com.assignment2.queuingmechanism.dto.*;
+import com.assignment2.queuingmechanism.exceptions.CustomGenericException;
+import com.assignment2.queuingmechanism.repository.ConsumerRepo;
+import com.assignment2.queuingmechanism.repository.InboundMessageRepo;
+import com.assignment2.queuingmechanism.repository.TopicRepo;
+import com.assignment2.queuingmechanism.requests.ConsumeRequest;
+import com.assignment2.queuingmechanism.responses.ConsumeResponse;
+import com.assignment2.queuingmechanism.utils.Helpers;
+import com.assignment2.queuingmechanism.utils.Validations;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+<span class="fc" id="L29">@Slf4j</span>
+@Service
+<span class="fc" id="L31">@RequiredArgsConstructor</span>
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class ConsumerService {
+<span class="fc" id="L34">    static Queue&lt;ConsumeRequest&gt; consumeRequests = new ConcurrentLinkedQueue&lt;&gt;();</span>
+    ConsumerRepo consumerRepo;
+    Helpers helpers;
+    InboundMessageRepo inboundMessageRepo;
+    Validations validations;
+    TopicRepo topicRepo;
+
+    public ConsumerDto saveConsumer(ConsumerDto consumerDto) {
+<span class="fc" id="L42">        return helpers.consumerEntityToDto(consumerRepo.save(helpers.consumerDtoToEntity(consumerDto)));</span>
+    }
+
+    public void subscribeToTopic(String consumerName, String topicName) {
+<span class="fc" id="L46">        ConsumerDto consumer = helpers.consumerEntityToDto(consumerRepo.findByName(consumerName));</span>
+<span class="fc" id="L47">        TopicDto topicDto = helpers.topicEntityToDto(topicRepo.findByName(topicName));</span>
+<span class="fc" id="L48">        validations.validateSubscribeRequest(topicDto, consumer);</span>
+<span class="fc" id="L49">        topicDto.getSubscribers().add(consumer);</span>
+<span class="fc" id="L50">        topicRepo.save(helpers.topicDtoToEntity(topicDto));</span>
+<span class="fc" id="L51">    }</span>
+
+    public ConsumeResponse consumeMessageRequest(String consumerName, String topicName) {
+<span class="fc" id="L54">        ConsumerDto consumer = helpers.consumerEntityToDto(consumerRepo.findByName(consumerName));</span>
+<span class="fc" id="L55">        TopicDto topic = helpers.topicEntityToDto(topicRepo.findByName(topicName));</span>
+<span class="fc" id="L56">        validations.validateConsumerAndTopic(consumer, topic);</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (!checkIfSubscribed(topic, consumer)) {</span>
+<span class="fc" id="L58">            throw new CustomGenericException(Constants.FORBIDDEN, Constants.NO_SUBSCRIPTION);</span>
+        }
+<span class="fc" id="L60">        ConsumeRequest consumeRequest = new ConsumeRequest();</span>
+<span class="fc" id="L61">        consumeRequest.setId(helpers.generateConsumeRequestId());</span>
+<span class="fc" id="L62">        consumeRequest.setConsumer(consumer);</span>
+<span class="fc" id="L63">        consumeRequest.setTopic(topic);</span>
+<span class="fc" id="L64">        consumeRequests.add(consumeRequest);</span>
+<span class="fc" id="L65">        log.info(&quot;Message Processing Started for consumer: {}&quot;, consumerName);</span>
+<span class="fc" id="L66">        return new ConsumeResponse(consumeRequest.getId(), topicName, consumerName, Constants.PROCESSING);</span>
+    }
+
+    @Async
+    @Scheduled(fixedRate = 5000)
+    public void processConsumeRequests() {
+<span class="fc" id="L72">        consumeRequests.stream()</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">                .filter(consumerRequest -&gt; consumerRequest.getStatus() == ConsumeRequestStatus.PENDING)</span>
+<span class="fc" id="L74">                .filter(this::checkForPartitions)</span>
+<span class="fc" id="L75">                .forEach(consumerRequest -&gt; {</span>
+<span class="nc" id="L76">                    getMessageFromPartition(consumerRequest, consumerRequest.getPartition());</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">                    if (consumerRequest.getStatus() == ConsumeRequestStatus.DONE) {</span>
+<span class="nc" id="L78">                        consumeRequests.remove(consumerRequest);</span>
+                    }
+<span class="nc" id="L80">                });</span>
+<span class="fc" id="L81">    }</span>
+
+    private boolean checkForPartitions(ConsumeRequest consumerRequest) {
+<span class="fc" id="L84">        Optional&lt;Partition&gt; optionalPartition = ProducerService.partitionList.stream()</span>
+<span class="pc bnc" id="L85" title="All 4 branches missed.">                .filter(partition -&gt; partition.getTopicName().equals(consumerRequest.getTopic().getName()) &amp;&amp; partition.isAvailable())</span>
+<span class="fc" id="L86">                .findFirst();</span>
+<span class="fc" id="L87">        optionalPartition.ifPresent(consumerRequest::setPartition);</span>
+<span class="fc" id="L88">        return optionalPartition.isPresent();</span>
+
+    }
+
+    @Async
+    private void getMessageFromPartition(ConsumeRequest consumeRequest, Partition partition) {
+<span class="nc" id="L94">        partition.setAvailable(false);</span>
+<span class="nc" id="L95">        consumeRequest.setStatus(ConsumeRequestStatus.PROCESSING);</span>
+<span class="nc" id="L96">        LinkedBlockingQueue&lt;TopicMessageDto&gt; topicMessageDtos = TopicService</span>
+                .topics
+<span class="nc" id="L98">                .get(consumeRequest.getTopic().getName())</span>
+<span class="nc" id="L99">                .get(consumeRequest.getPartition().getProducerId());</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (topicMessageDtos == null) {</span>
+<span class="nc" id="L101">            log.info(&quot;No messages in the assigned partition for consumer: {}&quot;, consumeRequest.getConsumer().getName());</span>
+        }
+<span class="nc" id="L103">        TopicMessageDto pollResult = Objects.requireNonNull(topicMessageDtos).poll();</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (pollResult == null) {</span>
+<span class="nc" id="L105">            log.info(&quot;No messages left in the assigned partition for consumer: {}&quot;, consumeRequest.getConsumer().getName());</span>
+        } else {
+<span class="nc" id="L107">            log.info(&quot;message consumed:{}, by {} from {}&quot;, pollResult, consumeRequest.getConsumer().getName(), consumeRequest.getTopic().getName());</span>
+<span class="nc" id="L108">            createAndSaveInboundMessage(pollResult.getMessage(), consumeRequest.getTopic().getName(), consumeRequest.getConsumer(), pollResult.getProducerId());</span>
+        }
+        try {
+<span class="nc" id="L111">            Thread.sleep(20000);</span>
+<span class="nc" id="L112">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L113">            throw new CustomGenericException(Constants.INTERNAL_SERVER_ERROR, Constants.SOMETHING_WENT_WRONG + e.getMessage());</span>
+<span class="nc" id="L114">        }</span>
+<span class="nc" id="L115">        partition.setAvailable(true);</span>
+<span class="nc" id="L116">        consumeRequest.setStatus(ConsumeRequestStatus.DONE);</span>
+<span class="nc" id="L117">    }</span>
+
+    private boolean checkIfSubscribed(TopicDto topic, ConsumerDto consumer) {
+<span class="fc" id="L120">        return topic.getSubscribers().stream().map(ConsumerDto::getName)</span>
+<span class="fc" id="L121">                .anyMatch(consumerName -&gt; consumerName.equals(consumer.getName()));</span>
+    }
+
+    private void createAndSaveInboundMessage(String message, String topicName, ConsumerDto consumer, long producerId) {
+<span class="nc" id="L125">        inboundMessageRepo</span>
+<span class="nc" id="L126">                .save(helpers</span>
+<span class="nc" id="L127">                        .inboundMessageDtoToEntity(InboundMessageDto.builder().message(message).consumerId(consumer.getId()).producerId(producerId).topicName(topicName).subscriptionTime(LocalDateTime.now()).build()));</span>
+<span class="nc" id="L128">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

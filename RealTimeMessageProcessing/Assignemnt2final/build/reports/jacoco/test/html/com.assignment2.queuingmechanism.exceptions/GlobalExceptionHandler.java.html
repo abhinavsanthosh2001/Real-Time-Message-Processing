@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">QueuingMechanism</a> &gt; <a href="index.source.html" class="el_package">com.assignment2.queuingmechanism.exceptions</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.assignment2.queuingmechanism.exceptions;
+
+import com.assignment2.queuingmechanism.constants.Constants;
+import com.assignment2.queuingmechanism.responses.CustomGenericErrorResponse;
+import com.assignment2.queuingmechanism.responses.ErrorResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import javax.validation.ConstraintViolationException;
+import java.net.BindException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+<span class="fc" id="L22">@Slf4j</span>
+@ControllerAdvice
+<span class="fc" id="L24">public class GlobalExceptionHandler {</span>
+
+    @ExceptionHandler({ConstraintViolationException.class})
+    public ResponseEntity&lt;Object&gt; handleConstraintViolation(ConstraintViolationException ex) {
+<span class="nc" id="L28">        Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L29">        map.put(Constants.ERROR, ex.getClass());</span>
+<span class="nc" id="L30">        List&lt;String&gt; errors = ex.getConstraintViolations().stream()</span>
+<span class="nc" id="L31">                .map(violation -&gt; violation.getPropertyPath() + &quot;: &quot; + violation.getMessage())</span>
+<span class="nc" id="L32">                .collect(Collectors.toList());</span>
+<span class="nc" id="L33">        map.put(Constants.CONSTRAINS_VIOLATED, errors);</span>
+<span class="nc" id="L34">        return new ResponseEntity&lt;&gt;(map, HttpStatus.BAD_REQUEST);</span>
+    }
+
+    @ExceptionHandler({SQLIntegrityConstraintViolationException.class})
+    public ResponseEntity&lt;Object&gt; handleConstraintViolation2(SQLIntegrityConstraintViolationException e) {
+<span class="nc" id="L39">        return new ResponseEntity&lt;&gt;(new ErrorResponse(e.getClass().toString(), e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class})
+    public ResponseEntity&lt;Object&gt; httpMessageNotReadableException(HttpMessageNotReadableException e) {
+<span class="nc" id="L44">        return new ResponseEntity&lt;&gt;(new ErrorResponse(e.getClass().toString(), e.getCause().toString()), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class})
+    public ResponseEntity&lt;Object&gt; handleIllegal(IllegalArgumentException e) {
+<span class="nc" id="L49">        return new ResponseEntity&lt;&gt;(new ErrorResponse(e.getClass().toString(), e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+
+    @ExceptionHandler({NoSuchElementException.class})
+    public ResponseEntity&lt;Object&gt; handleNoElementException(NoSuchElementException e) {
+<span class="nc" id="L54">        return new ResponseEntity&lt;&gt;(new ErrorResponse(e.getClass().toString(), e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    public ResponseEntity&lt;Object&gt; handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+<span class="nc" id="L59">        return new ResponseEntity&lt;&gt;(new ErrorResponse(ex.getClass().toString(), ex.getName() + Constants.SHOULD_BE_OF_TYPE + Objects.requireNonNull(ex.getRequiredType()).getName()), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+
+    @ExceptionHandler({HttpRequestMethodNotSupportedException.class})
+    public ResponseEntity&lt;Object&gt; handleException1(HttpRequestMethodNotSupportedException e) {
+<span class="nc" id="L64">        return new ResponseEntity&lt;&gt;(new ErrorResponse(e.getClass().toString(), e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+
+    @ExceptionHandler({NullPointerException.class})
+    public ResponseEntity&lt;Object&gt; handleException12(NullPointerException e) {
+<span class="nc" id="L69">        return new ResponseEntity&lt;&gt;(new ErrorResponse(e.getClass().toString(), e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+
+    @ExceptionHandler(CustomGenericException.class)
+    public ResponseEntity&lt;Object&gt; handleBadRequest(CustomGenericException e) {
+<span class="nc" id="L74">        return new ResponseEntity&lt;&gt;(new CustomGenericErrorResponse(e.getErrorCode(), e.getMessage()), Objects.requireNonNull(HttpStatus.resolve(Integer.parseInt(e.getErrorCode()))));</span>
+    }
+
+    @ExceptionHandler({BindException.class})
+    public ResponseEntity&lt;Object&gt; bindException(BindException e) {
+<span class="nc" id="L79">        return new ResponseEntity&lt;&gt;(new ErrorResponse(e.getClass().toString(), e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+
+    @ExceptionHandler({MethodArgumentNotValidException.class})
+    public ResponseEntity&lt;Object&gt; methodArgumentNotValidException(MethodArgumentNotValidException e) {
+<span class="nc" id="L84">        List&lt;String&gt; listOfErrors = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L85">        e.getAllErrors().forEach(i -&gt; listOfErrors.add(i.getDefaultMessage()));</span>
+<span class="nc" id="L86">        return new ResponseEntity&lt;&gt;(new ErrorResponse(e.getClass().getName(), listOfErrors), HttpStatus.BAD_REQUEST);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

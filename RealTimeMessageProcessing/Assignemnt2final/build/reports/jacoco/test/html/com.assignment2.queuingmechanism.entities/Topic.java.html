@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Topic.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">QueuingMechanism</a> &gt; <a href="index.source.html" class="el_package">com.assignment2.queuingmechanism.entities</a> &gt; <span class="el_source">Topic.java</span></div><h1>Topic.java</h1><pre class="source lang-java linenums">package com.assignment2.queuingmechanism.entities;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.FieldDefaults;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import java.util.List;
+
+@Entity
+@Getter
+<span class="pc" id="L21">@Setter</span>
+<span class="nc" id="L22">@ToString</span>
+<span class="fc" id="L23">@NoArgsConstructor</span>
+<span class="nc" id="L24">@AllArgsConstructor</span>
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class Topic {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+<span class="nc" id="L29">    long id;</span>
+    @Column(unique = true)
+<span class="fc" id="L31">    String name;</span>
+<span class="nc" id="L32">    String description;</span>
+    @ManyToMany(fetch = FetchType.EAGER)
+<span class="nc" id="L34">    List&lt;Consumer&gt; subscribers;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

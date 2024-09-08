@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AsyncServiceExecutor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">QueuingMechanism</a> &gt; <a href="index.source.html" class="el_package">com.assignment2.queuingmechanism.config</a> &gt; <span class="el_source">AsyncServiceExecutor.java</span></div><h1>AsyncServiceExecutor.java</h1><pre class="source lang-java linenums">package com.assignment2.queuingmechanism.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.util.concurrent.Executor;
+
+@Configuration
+<span class="fc" id="L11">public class AsyncServiceExecutor implements AsyncConfigurer {</span>
+    @Override
+    @Bean(&quot;Async&quot;)
+    public Executor getAsyncExecutor() {
+<span class="fc" id="L15">        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();</span>
+<span class="fc" id="L16">        taskExecutor.setCorePoolSize(10);</span>
+<span class="fc" id="L17">        taskExecutor.setMaxPoolSize(10);</span>
+<span class="fc" id="L18">        taskExecutor.setQueueCapacity(1000);</span>
+<span class="fc" id="L19">        taskExecutor.setThreadNamePrefix(&quot;Async&quot;);</span>
+<span class="fc" id="L20">        taskExecutor.initialize();</span>
+<span class="fc" id="L21">        return taskExecutor;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

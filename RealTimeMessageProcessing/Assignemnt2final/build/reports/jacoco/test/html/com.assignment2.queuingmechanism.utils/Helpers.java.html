@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Helpers.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">QueuingMechanism</a> &gt; <a href="index.source.html" class="el_package">com.assignment2.queuingmechanism.utils</a> &gt; <span class="el_source">Helpers.java</span></div><h1>Helpers.java</h1><pre class="source lang-java linenums">package com.assignment2.queuingmechanism.utils;
+
+import com.assignment2.queuingmechanism.dto.ConsumerDto;
+import com.assignment2.queuingmechanism.dto.InboundMessageDto;
+import com.assignment2.queuingmechanism.dto.ProducerDto;
+import com.assignment2.queuingmechanism.dto.TopicDto;
+import com.assignment2.queuingmechanism.entities.Consumer;
+import com.assignment2.queuingmechanism.entities.InboundMessage;
+import com.assignment2.queuingmechanism.entities.Producer;
+import com.assignment2.queuingmechanism.entities.Topic;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+
+@FieldDefaults(level = AccessLevel.PRIVATE)
+<span class="fc" id="L20">public class Helpers {</span>
+    @Autowired
+    ModelMapper modelMapper;
+<span class="fc" id="L23">    long messageId = 0;</span>
+<span class="fc" id="L24">    long consumeRequestId = 0;</span>
+
+    public ProducerDto producerEntityToDto(Producer producer) {
+<span class="nc bnc" id="L27" title="All 2 branches missed.">        if (producer == null) {</span>
+<span class="nc" id="L28">            return null;</span>
+        }
+<span class="nc" id="L30">        return modelMapper.map(producer, ProducerDto.class);</span>
+    }
+
+    public Producer producerDtoToEntity(ProducerDto producerDto) {
+<span class="nc bnc" id="L34" title="All 2 branches missed.">        if (producerDto == null) {</span>
+<span class="nc" id="L35">            return null;</span>
+        }
+<span class="nc" id="L37">        return modelMapper.map(producerDto, Producer.class);</span>
+    }
+
+    public ConsumerDto consumerEntityToDto(Consumer consumer) {
+<span class="nc bnc" id="L41" title="All 2 branches missed.">        if (consumer == null) {</span>
+<span class="nc" id="L42">            return null;</span>
+        }
+<span class="nc" id="L44">        return modelMapper.map(consumer, ConsumerDto.class);</span>
+    }
+
+    public Consumer consumerDtoToEntity(ConsumerDto consumerDto) {
+<span class="nc bnc" id="L48" title="All 2 branches missed.">        if (consumerDto == null) {</span>
+<span class="nc" id="L49">            return null;</span>
+        }
+<span class="nc" id="L51">        return modelMapper.map(consumerDto, Consumer.class);</span>
+    }
+
+    public InboundMessage inboundMessageDtoToEntity(InboundMessageDto inboundMessageDto) {
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (inboundMessageDto == null) {</span>
+<span class="nc" id="L56">            return null;</span>
+        }
+<span class="nc" id="L58">        return modelMapper.map(inboundMessageDto, InboundMessage.class);</span>
+    }
+
+    public TopicDto topicEntityToDto(Topic topic) {
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if (topic == null) {</span>
+<span class="nc" id="L63">            return null;</span>
+        }
+<span class="nc" id="L65">        return modelMapper.map(topic, TopicDto.class);</span>
+    }
+
+    public Topic topicDtoToEntity(TopicDto topicDto) {
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (topicDto == null) {</span>
+<span class="nc" id="L70">            return null;</span>
+        }
+<span class="nc" id="L72">        return modelMapper.map(topicDto, Topic.class);</span>
+    }
+
+    public long generateMessageId() {
+<span class="nc" id="L76">        messageId++;</span>
+<span class="nc" id="L77">        return messageId;</span>
+    }
+
+    public long generateConsumeRequestId() {
+<span class="nc" id="L81">        consumeRequestId++;</span>
+<span class="nc" id="L82">        return consumeRequestId;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

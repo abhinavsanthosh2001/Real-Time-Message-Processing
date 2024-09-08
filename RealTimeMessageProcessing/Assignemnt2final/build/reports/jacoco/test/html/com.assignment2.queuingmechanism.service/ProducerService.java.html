@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProducerService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">QueuingMechanism</a> &gt; <a href="index.source.html" class="el_package">com.assignment2.queuingmechanism.service</a> &gt; <span class="el_source">ProducerService.java</span></div><h1>ProducerService.java</h1><pre class="source lang-java linenums">package com.assignment2.queuingmechanism.service;
+
+import com.assignment2.queuingmechanism.constants.Constants;
+import com.assignment2.queuingmechanism.dto.Partition;
+import com.assignment2.queuingmechanism.dto.ProducerDto;
+import com.assignment2.queuingmechanism.dto.TopicDto;
+import com.assignment2.queuingmechanism.dto.TopicMessageDto;
+import com.assignment2.queuingmechanism.exceptions.CustomGenericException;
+import com.assignment2.queuingmechanism.repository.ProducerRepo;
+import com.assignment2.queuingmechanism.repository.TopicRepo;
+import com.assignment2.queuingmechanism.responses.PublisherResponse;
+import com.assignment2.queuingmechanism.utils.Helpers;
+import com.assignment2.queuingmechanism.utils.Validations;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+
+<span class="fc" id="L31">@Slf4j</span>
+@Service
+<span class="fc" id="L33">@RequiredArgsConstructor</span>
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Getter
+public class ProducerService {
+<span class="nc" id="L37">    ProducerRepo producerRepo;</span>
+<span class="nc" id="L38">    Helpers helpers;</span>
+<span class="nc" id="L39">    Validations validations;</span>
+<span class="nc" id="L40">    TopicRepo topicRepo;</span>
+<span class="pc" id="L41">    ExecutorService executor = Executors.newSingleThreadExecutor();</span>
+<span class="nc" id="L42">    TopicService topicService;</span>
+<span class="fc" id="L43">    static List&lt;Partition&gt; partitionList = new ArrayList&lt;&gt;();</span>
+
+    public ProducerDto saveProducer(ProducerDto producerDto) {
+<span class="fc" id="L46">        return helpers.producerEntityToDto(producerRepo.save(helpers.producerDtoToEntity(producerDto)));</span>
+    }
+
+    @Async
+    public Future&lt;PublisherResponse&gt; addMessageToTopic(long producerId, String topicName, String message) {
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (!producerRepo.existsById(producerId)) {</span>
+<span class="fc" id="L52">            throw new CustomGenericException(Constants.BAD_REQUEST, Constants.NO_PRODUCER_MESSAGE);</span>
+        }
+<span class="fc" id="L54">        TopicDto topicDto = helpers.topicEntityToDto(topicRepo.findByName(topicName));</span>
+<span class="fc" id="L55">        validations.validatePublishMessageInput(topicDto,message);</span>
+<span class="fc" id="L56">        TopicMessageDto messageDto = new TopicMessageDto(helpers.generateMessageId(), producerId, message);</span>
+<span class="fc" id="L57">        addMessage(topicName, messageDto);</span>
+<span class="fc" id="L58">        log.info(&quot;successfully added message to topic:{}&quot;, TopicService.topics);</span>
+<span class="fc" id="L59">        return executor.submit(() -&gt; new PublisherResponse(producerId, topicName, message));</span>
+    }
+
+    private void addMessage(String topicName, TopicMessageDto messageDto) {
+<span class="fc" id="L63">        TopicService</span>
+                .topics
+<span class="pc" id="L65">                .computeIfAbsent(topicName, k -&gt; new HashMap&lt;&gt;());</span>
+<span class="fc" id="L66">        TopicService</span>
+                .topics
+<span class="fc" id="L68">                .get(topicName)</span>
+<span class="fc" id="L69">                .computeIfAbsent(messageDto.getProducerId(), k -&gt; new LinkedBlockingQueue&lt;&gt;())</span>
+<span class="fc" id="L70">                .add(messageDto);</span>
+<span class="fc" id="L71">        addToPartitionList(topicName, messageDto);</span>
+<span class="fc" id="L72">    }</span>
+
+    private void addToPartitionList(String topicName, TopicMessageDto messageDto) {
+<span class="fc" id="L75">        Optional&lt;Partition&gt; optionalPartition = partitionList.stream()</span>
+<span class="pc bnc" id="L76" title="All 2 branches missed.">                .filter(partition -&gt; partition.getProducerId() == messageDto.getProducerId())</span>
+<span class="pc" id="L77">                .filter(partition -&gt; partition.getTopicName().equals(topicName))</span>
+<span class="fc" id="L78">                .findFirst();</span>
+
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if (optionalPartition.isPresent()) {</span>
+<span class="nc" id="L81">            log.info(partitionList.toString());</span>
+<span class="nc" id="L82">            return;</span>
+        }
+<span class="fc" id="L84">        Partition partition = new Partition();</span>
+<span class="fc" id="L85">        partition.setProducerId(messageDto.getProducerId());</span>
+<span class="fc" id="L86">        partition.setTopicName(topicName);</span>
+<span class="fc" id="L87">        partitionList.add(partition);</span>
+<span class="fc" id="L88">        log.info(partitionList.toString());</span>
+<span class="fc" id="L89">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
